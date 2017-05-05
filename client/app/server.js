@@ -88,7 +88,9 @@ export function getFeedData(user, cb) {
 //     cb(JSON.parse(xhr.responseText));
 //   });
 // }
-function postStatusUpdate(user, location, contents, image, callback) {
+
+//added db
+function postStatusUpdate(user, location, contents, image, callback, db) {
   // Get the current UNIX time.
   var time = new Date().getTime();
   // The new status update. The database will assign the ID for us.

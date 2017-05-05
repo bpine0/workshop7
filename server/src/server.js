@@ -685,20 +685,45 @@ app.put('/feeditem/:feeditemid/likelist/:userid', function(req, res) {
     var comment = req.body;
     var author = req.body.author;
     var feedItemId = req.params.feeditemid;
-    if (fromUser === author) {
-      var feedItem = readDocument('feedItems', feedItemId);
-      // Initialize likeCounter to empty.
-      comment.likeCounter = [];
-      // Push returns the new length of the array.
-      // The index of the new element is the length of the array minus 1.
-      // Example: [].push(1) returns 1, but the index of the new element is 0.
-      var index = feedItem.comments.push(comment) - 1;
-      writeDocument('feedItems', feedItem);
-      // 201: Created.
-      res.status(201);
-      res.set('Location', '/feeditem/' + feedItemId + "/comments/" + index);
-      // Return a resolved version of the feed item.
-      res.send(getFeedItemSync(feedItemId));
+    comment.author = new ObjectID(req.body.author);
+    comment.likeCounter = [];
+    // if (fromUser === author) {
+    //   var feedItem = readDocument('feedItems', feedItemId);
+    //   // Initialize likeCounter to empty.
+    //   comment.likeCounter = [];
+    //   // Push returns the new length of the array.
+    //   // The index of the new element is the length of the array minus 1.
+    //   // Example: [].push(1) returns 1, but the index of the new element is 0.
+    //   var index = feedItem.comments.push(comment) - 1;
+    //   writeDocument('feedItems', feedItem);
+    //   // 201: Created.
+    //   res.status(201);
+    //   res.set('Location', '/feeditem/' + feedItemId + "/comments/" + index);
+    //   // Return a resolved version of the feed item.
+    //   res.send(getFeedItemSync(feedItemId));
+    if (fromUser == author) {
+      db.collection('feedItems').updateOne({_id: new ObjectID(feedItemId)},
+        {
+          $push: {
+            comments: comment
+          }
+        }, function(err) {
+          if(err) {
+            res.status(500).send("A database error occurred: " + err);
+          } else {
+            getFeedItem(new ObjectID(feedItemId), function(err, feedItem) {
+              if(err) {
+                res.status(500).send("A database error occurred: " + err);
+              } else {
+                res.status(201);
+                var index = feedItem.comments.length - 1;
+                res.set('Location', '/feeditem/' + feedItemId + "/comments/" + index);
+                res.send(feedItem);
+              }
+            });
+          }
+        }
+      );
     } else {
       // Unauthorized.
       res.status(401).end();
