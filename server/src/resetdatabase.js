@@ -106,6 +106,7 @@ var initialData = {
     }
   }
 };
+
 /**
  * Resets a collection.
  */

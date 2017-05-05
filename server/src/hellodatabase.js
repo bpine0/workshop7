@@ -13,6 +13,7 @@ MongoClient.connect(url, function(err, db) {
 });
 
 
+
 /**
  * Inserts a simple document into the 'helloworld'
  * document collection.
@@ -21,6 +22,7 @@ MongoClient.connect(url, function(err, db) {
  *   operation completes. We will pass back the new object's
  *   ID.
  */
+
 function insertExample(db, callback) {
   // A document is just a JSON object, like in our mock database.
   var exampleDocument = {
@@ -38,6 +40,7 @@ function insertExample(db, callback) {
     }
   });
 }
+
 
 /**
  * Get a document from the helloworld document collection with
@@ -67,6 +70,7 @@ function getHelloWorldDocument(db, id, callback) {
     }
   });
 }
+
 
 /**
  * Add a new document to helloworld collection, read the document,
