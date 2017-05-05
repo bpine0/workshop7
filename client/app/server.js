@@ -77,15 +77,72 @@ export function getFeedData(user, cb) {
 /**
  * Adds a new status update to the database.
  */
-export function postStatusUpdate(user, location, contents, image, cb) {
-  sendXHR('POST', '/feeditem', {
-    userId: user,
-    location: location,
-    image: image,
-    contents: contents
-  }, (xhr) => {
-    // Return the new status update.
-    cb(JSON.parse(xhr.responseText));
+// export function postStatusUpdate(user, location, contents, image, cb) {
+//   sendXHR('POST', '/feeditem', {
+//     userId: user,
+//     location: location,
+//     image: image,
+//     contents: contents
+//   }, (xhr) => {
+//     // Return the new status update.
+//     cb(JSON.parse(xhr.responseText));
+//   });
+// }
+function postStatusUpdate(user, location, contents, image, callback) {
+  // Get the current UNIX time.
+  var time = new Date().getTime();
+  // The new status update. The database will assign the ID for us.
+  var newStatusUpdate = {
+    "likeCounter": [],
+    "type": "statusUpdate",
+    "contents": {
+      "author": user,
+      "postDate": time,
+      "location": location,
+      "contents": contents,
+      "image": image
+    },
+    // List of comments on the post
+    "comments": []
+  };
+
+  // Add the status update to the database.
+  db.collection('feedItems').insertOne(newStatusUpdate, function(err, result) {
+    if (err) {
+      return callback(err);
+    }
+    // Unlike the mock database, MongoDB does not return the newly added object
+    // with the _id set.
+    // Attach the new feed item's ID to the newStatusUpdate object. We will
+    // return this object to the client when we are done.
+    // (When performing an insert operation, result.insertedId contains the new
+    // document's ID.)
+    newStatusUpdate._id = result.insertedId;
+
+    // Retrieve the author's user object.
+    db.collection('users').findOne({ _id: user }, function(err, userObject) {
+      if (err) {
+        return callback(err);
+      }
+      // Update the author's feed with the new status update's ID.
+      db.collection('feeds').updateOne({ _id: userObject.feed },
+        {
+          $push: {
+            contents: {
+              $each: [newStatusUpdate._id],
+              $position: 0
+            }
+          }
+        },
+        function(err) {
+          if (err) {
+            return callback(err);
+          }
+          // Return the new status update to the application.
+          callback(null, newStatusUpdate);
+        }
+      );
+    });
   });
 }
 
